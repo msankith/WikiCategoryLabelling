@@ -21,15 +21,15 @@ class Model2:
         self.num_filters_paragraph = 50
         self.maxParagraph = maxParagraphs
         self.poolLength = 50
-        self.fullyConnectedLayerInput = int(maxParagraphLength*self.num_filters_paragraph/self.poolLength)
+        self.fullyConnectedLayerInput = int(len(self.filterSizes_paragraph)*maxParagraphLength*self.num_filters_paragraph/self.poolLength)
         
         self.wordEmbedding = tf.Variable(tf.random_uniform([self.vocabularySize, self.wordEmbeddingDimension], -1.0, 1.0),name="wordEmbedding")
 
         self.paragraphList = []
         for i in range(self.maxParagraph):
-            self.paragraphList.append(tf.placeholder(tf.int32,[self.paragraphLength],name="paragraphPlaceholder"+str(i)))
+            self.paragraphList.append(tf.placeholder(tf.int32,[None,self.paragraphLength],name="paragraphPlaceholder"+str(i)))
 
-        self.target = tf.placeholder(tf.float32,[self.labels],name="target")
+        self.target = tf.placeholder(tf.float32,[None,self.labels],name="target")
         
         
         self.graph()
@@ -51,7 +51,7 @@ class Model2:
         with tf.device(device_name): 
             paraEmbedding=tf.nn.embedding_lookup(self.wordEmbedding,paragraphWords)
     
-        return tf.expand_dims(tf.expand_dims(paraEmbedding, -1),0)
+        return tf.expand_dims(paraEmbedding, -1)
     
     
     
@@ -78,8 +78,8 @@ class Model2:
                         strides=[1, pool_length, 1, 1],
                         padding='SAME',
                         name="pool")
-            pooled_outputs.append(pooled)
-        return tf.reshape(tf.concat(pooled_outputs,axis=0),[1,-1])
+            pooled_outputs.append(tf.squeeze(pooled))
+        return tf.concat([tf.reshape(po, [-1, int(self.fullyConnectedLayerInput/len(filterSizes))]) for po in pooled_outputs], axis=1)
 
     
     
@@ -87,14 +87,14 @@ class Model2:
     
         paragraphLogit=[]
         shape = [self.fullyConnectedLayerInput,self.labels]
-        weights =tf.Variable(tf.truncated_normal(shape, stddev=0.1),name="FC_W")
-        bias = tf.Variable(tf.constant(0.1, shape=[self.labels]),name="FC_Bias")
+        weights =tf.Variable(tf.truncated_normal(shape, stddev=0.1))
+        bias = tf.Variable(tf.constant(0.1, shape=[self.labels]))
         for paragraph in paragraphVectorList:
             paragraphVector = self.getParagraphEmbedding(paragraph)
             cnnEmbedding = self.convLayeronParagraph(paragraphVector,filterSizes_paragraph,1,num_filters_parargaph)
-            expandedCNNEmbedding = tf.reshape(cnnEmbedding,[1,-1])
+            #expandedCNNEmbedding = tf.reshape(cnnEmbedding,[1,-1])
         
-            logit=tf.matmul(expandedCNNEmbedding,weights)+bias
+            logit=tf.matmul(cnnEmbedding,weights)+bias
             logit = tf.nn.sigmoid(logit)
         
             paragraphLogit.append(tf.squeeze(logit))
