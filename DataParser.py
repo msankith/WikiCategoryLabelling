@@ -60,6 +60,22 @@ class DataParser:
         data= self.data[self.counter]
         self.counter+=1
         return data
+    def nextBatch(self,batchSize):
+        if self.counter >=self.totalPages:
+            self.counter=0
+        labelBatch=[]
+        feaBatch=[]
+        for itr in range(self.maxParagraph):
+            feaBatch.append([])
+        for i in range(batchSize):
+            if self.counter+1 >=self.totalPages:
+                self.counter=0
+            labelBatch.append(self.data[self.counter][0])
+            for itr in range(self.maxParagraph):
+                feaBatch[itr].append(self.data[self.counter][1][itr])
+            self.counter+=1
+        return (labelBatch,feaBatch)
+    
     def restore(self):
         self.counter=0
 

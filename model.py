@@ -1,6 +1,17 @@
 
 # coding: utf-8
 
+# In[4]:
+
+import tensorflow as tf
+import math
+
+
+# In[25]:
+
+
+# coding: utf-8
+
 # In[1]:
 
 import tensorflow as tf
@@ -8,31 +19,39 @@ import tensorflow as tf
 
 # In[ ]:
 
-class Model:
+class Model1_batch:
     def __init__(self,maxParagraphLength,maxParagraphs,labels,vocabularySize):
         '''
         Constructor
         '''
-        self.wordEmbeddingDimension = 70
+        self.wordEmbeddingDimension = 50
         self.vocabularySize=vocabularySize
         self.labels=labels
-        self.filterSizes_paragraph = [3]
+        self.filterSizes_paragraph = [2,3]
         self.filterSizes_allPara=3
         self.paragraphLength=maxParagraphLength
-        self.num_filters_parargaph=15
-        self.num_filters_allPara=20
+        self.num_filters_parargaph=25
+        self.num_filters_allPara=30
         self.maxParagraph = maxParagraphs
-        self.poolLength=5
+        self.poolLength=10
         self.filterShapeOfAllPara =[self.filterSizes_allPara,3,1,self.num_filters_allPara]
-        self.fullyConnectedLayerInput = 42000
-        self.device ='cpu'
+        self.fullyConnectedLayerInput = 375000
+        
+        self.paragraphOutputSize = len(self.filterSizes_paragraph)*self.num_filters_parargaph*int(math.ceil(maxParagraphLength/float(self.poolLength)))
+        self.conv2LayerOutputSize = len(self.filterSizes_paragraph)*int(math.ceil(maxParagraphLength/float(self.poolLength)))*maxParagraphs
+        self.filterShapeOfAllPara =[maxParagraphs-5,5,1,self.num_filters_allPara]
+        #self.fullyConnectedLayerInput =self.conv2LayerOutputSize*self.num_filters_allPara
+        self.fullyConnectedLayerInput = 375000
+        
+        
+        self.device ='gpu'
         self.wordEmbedding = tf.Variable(tf.random_uniform([self.vocabularySize, self.wordEmbeddingDimension], -1.0, 1.0),name="wordEmbedding")
 
         self.paragraphList = []
         for i in range(self.maxParagraph):
-            self.paragraphList.append(tf.placeholder(tf.int32,[self.paragraphLength],name="paragraphPlaceholder"+str(i)))
+            self.paragraphList.append(tf.placeholder(tf.int32,[None,self.paragraphLength],name="paragraphPlaceholder"+str(i)))
 
-        self.target = tf.placeholder(tf.float32,[self.labels],name="target")
+        self.target = tf.placeholder(tf.float32,[None,self.labels],name="target")
         
         
         self.graph()
@@ -48,14 +67,14 @@ class Model:
             self.cross_entropy = -tf.reduce_sum(((self.target*tf.log(self.prediction + 1e-9)) + ((1-self.target) * tf.log(1 - self.prediction + 1e-9)) )  , name='xentropy' ) 
             self.cost = tf.reduce_mean(self.cross_entropy)
             self.optimizer = tf.train.AdamOptimizer(learning_rate=1e-4).minimize(self.cost)
-    
+        
     
     def getParagraphEmbedding(self,paragraphWords):
         device_name=self.device
         with tf.device(device_name): 
             paraEmbedding=tf.nn.embedding_lookup(self.wordEmbedding,paragraphWords)
     
-        return tf.expand_dims(tf.expand_dims(paraEmbedding, -1),0)
+        return tf.expand_dims(paraEmbedding, -1)
     
     
     
@@ -83,7 +102,7 @@ class Model:
                         padding='SAME',
                         name="pool")
             pooled_outputs.append(pooled)
-        return tf.reshape(tf.concat(pooled_outputs,axis=0),[1,-1])
+        return tf.concat(pooled_outputs,axis=1)
 
     
     
@@ -96,22 +115,27 @@ class Model:
             cnnEmbedding = self.convLayeronParagraph(paragraphVector,filterSizes_paragraph,1,num_filters_parargaph)
             paragraphCNNEmbedding.append(cnnEmbedding)
 
-        allParagraph=tf.expand_dims(tf.expand_dims(tf.concat(paragraphCNNEmbedding,axis=0),-1),0)
+#         allParagraph=tf.expand_dims(tf.expand_dims(tf.concat(paragraphCNNEmbedding,axis=0),-1),0)
 
-        shape = filterShapeOfAllPara
+        allParagraph=tf.concat(paragraphCNNEmbedding,axis=1)
+        self.allParagraph =tf.reshape(allParagraph,[-1,self.conv2LayerOutputSize,self.num_filters_parargaph,1])
+        shape = self.filterShapeOfAllPara
 
         weights= tf.Variable(tf.truncated_normal(shape, stddev=0.1),name="paragraphConvLayer2W_"+str(filterShapeOfAllPara[0]))
         bias= tf.Variable(tf.constant(0.1, shape=[num_filters_allPara]),name="paragraphConvLayer2B_"+str(filterShapeOfAllPara[0]))
 
         conv = tf.nn.conv2d(
-                        allParagraph,
+                        self.allParagraph,
                         weights,
                         strides=[1, 1, 1, 1],
                         padding="SAME",
                         name="conv")
         h = tf.nn.relu(tf.nn.bias_add(conv, bias), name="relu")
-        #return tf.reshape(allParagraph,[1,-1])
-        return tf.reshape(h,[1,-1])
+#         #return tf.reshape(allParagraph,[1,-1])
+#         return tf.reshape(h,[1,-1])
+        return tf.reshape(h,[-1,self.fullyConnectedLayerInput])
+        #return tf.reshape(h,[-1,self.conv2LayerOutputSize*self.num_filters_allPara])
+#         return paragraphCNNEmbedding,cnnEmbedding,paragraphVector,h
     
     def fullyConnectedLayer(self,convOutput,labels):
         shape = [self.fullyConnectedLayerInput,labels]
@@ -133,9 +157,17 @@ class Model:
 #         feed_dict_input[self.target]=data[0]
         for p in range(self.maxParagraph):
             feed_dict_input[self.paragraphList[p]]= data[1][p]
+            
         pred=self.session.run(self.prediction,feed_dict=feed_dict_input)
         return pred
-          
+    
+    def getError(self,data):
+        feed_dict_input={}
+        feed_dict_input[self.target]=data[0]
+        for p in range(self.maxParagraph):
+            feed_dict_input[self.paragraphList[p]]= data[1][p]
+        cost = self.session.run(self.cost,feed_dict=feed_dict_input)
+        return cost 
 
     def save(self,save_path):
         saver = tf.train.Saver()
@@ -151,4 +183,25 @@ class Model:
 
     def save_label_embeddings(self):
         pass
+
+
+
+# In[26]:
+
+#maxParagraphLength=35
+#maxParagraphs=5
+#labels=10
+#vocabularySize=150
+
+#model = Model(maxParagraphLength,maxParagraphs,labels,vocabularySize)
+
+
+# In[27]:
+
+#model.graph()
+
+
+# In[ ]:
+
+
 
