@@ -1,28 +1,31 @@
-from DataParser import DataParser
-from model2 import Model2 as Model
+from DataParser_wiki10 import DataParser_wiki10 as DataParser
+from model2_wiki import Model2_wiki as Model
 
 
 # In[ ]:
 
-maxParagraphLength=250
-maxParagraphs=10
-labels=1000
-vocabularySize=15000
-model = Model(maxParagraphLength,maxParagraphs,labels,vocabularySize)
-training = DataParser(maxParagraphLength,maxParagraphs,labels,vocabularySize)
-training.getDataFromfile("data/vocab_3L_l1000_sampled_10000_red_train.txt")
+maxParagraphLength=2500
+maxParagraphs=1
+#nlabels=1001
+#vocabularySize=76391
+vocabularySize=101939
+nlabels=30938
+model = Model(maxParagraphLength,maxParagraphs,nlabels,vocabularySize)
+training = DataParser(maxParagraphLength,nlabels,vocabularySize)
+training.getDataFromfile("Wiki10/wiki10_train.pkl")
+#training.getDataFromfile("data/wiki_fea_76390_Label_1000_train")
 
 batchSize=50
 
 epoch=0
-epochEnd=10
+epochEnd=100
 for e in range(epoch,epochEnd):
-    print 'Epoch: ' + str(e)
+    print 'Epoch: ' + str(e+1)
     cost=0
     for itr in range(int(training.totalPages/batchSize)):
         cost+=model.train(training.nextBatch(batchSize))
-        #break
-    print (str(cost))
+    print (str(cost/training.totalPages))
 
-    if e % 10 ==0:
-        model.save("model2_l1000_"+str(e))
+    if (e+1)%10 == 0:
+        print 'saving model..'
+        model.save("model2_wiki10_"+str(e+1))
