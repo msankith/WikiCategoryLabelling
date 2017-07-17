@@ -1,20 +1,20 @@
-#from DataParser_siml import DataParser_siml as DataParser
-#from model2_siml import Model2_siml as Model
-from DataParser_wiki10 import DataParser_wiki10 as DataParser
-from model2_wiki import Model2_wiki as Model
+from DataParser_siml import DataParser_siml as DataParser
+from model2_siml import Model2_siml as Model
+#from DataParser_wiki10 import DataParser_wiki10 as DataParser
+#from model2_wiki import Model2_wiki as Model
 
 
 # In[ ]:
 
 maxParagraphLength=2500
 maxParagraphs=1
-#nlabels=1001
-#vocabularySize=76391
-#training.getDataFromfile("data/wiki_fea_76390_Label_1000_train")
-vocabularySize=101939
-nlabels=30938
+nlabels=1001
+vocabularySize=76391
 training = DataParser(maxParagraphLength,nlabels,vocabularySize)
-training.getDataFromfile("Wiki10/wiki10_train.pkl")
+training.getDataFromfile("data/wiki_fea_76390_Label_1000_train")
+#vocabularySize=101939
+#nlabels=30938
+#training.getDataFromfile("Wiki10/wiki10_train.pkl")
 
 model = Model(maxParagraphLength,maxParagraphs,nlabels,vocabularySize)
 
