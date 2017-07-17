@@ -96,11 +96,10 @@ class Model2_wiki:
 	    #print(str(h.get_shape().as_list()))
 	    #print(str(featureValue.get_shape().as_list()))
             #featureValue_broadcast = tf.tile(tf.expand_dims(featureValue,axis=2),tf.stack([1,1,self.wordEmbeddingDimension]))
-            #h_unstacked = tf.unstack(tf.squeeze(h),axis=1)
-            #featureValue_unstacked = tf.unstack(featureValue,axis=1)
-            #pooled_outputs.append(tf.add_n([tf.scalar_mul(ef,eh) for ef,eh in zip(featureValue_unstacked,h_unstacked)]))
+            h_unstacked = tf.unstack(tf.squeeze(h),axis=1)
+            featureValue_unstacked = tf.unstack(featureValue,axis=1)
+            pooled_outputs.append(tf.add_n([tf.scalar_mul(ef,eh) for ef,eh in zip(featureValue_unstacked,h_unstacked)]))
             #pooled_outputs.append(tf.reshape(tf.reduce_mean(tf.multiply(tf.squeeze(h),featureValue_broadcast),axis=1),[-1,num_filters]))
-            pooled_outputs.append(tf.reshape(tf.reduce_mean(tf.squeeze(h),axis=1),[-1,num_filters]))
         return tf.concat(pooled_outputs,axis=1)
     
     
