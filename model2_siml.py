@@ -44,7 +44,7 @@ class Model2_siml:
             self.prediction, self.paragraph_prediction = self.convLayerCombineParagraph(self.paragraphList,self.filterSizes_paragraph,self.num_filters_paragraph)
             self.cross_entropy = -tf.reduce_sum(((self.target*tf.log(self.prediction + 1e-9)) + ((1-self.target) * tf.log(1 - self.prediction + 1e-9)) )  , name='xentropy' ) 
             self.cost = tf.reduce_mean(self.cross_entropy)
-            self.optimizer = tf.train.AdamOptimizer(learning_rate=1e-3).minimize(self.cost)
+            self.optimizer = tf.train.AdamOptimizer(learning_rate=1e-4).minimize(self.cost)
     
 
     def count_trainable_params(self):
@@ -101,7 +101,7 @@ class Model2_siml:
             '''
  	    #print(str(h.get_shape().as_list()))
  	    #print(str(pooled.get_shape().as_list()))
-            pooled_outputs.append(tf.reshape(tf.reduce_mean(h,axis=1),[-1,num_filters]))
+            pooled_outputs.append(tf.reshape(tf.reduce_sum(h,axis=1),[-1,num_filters])/50)
         return tf.concat(pooled_outputs,axis=1)
     
     
