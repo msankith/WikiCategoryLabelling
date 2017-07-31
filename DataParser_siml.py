@@ -4,6 +4,7 @@
 # In[ ]:
 
 import numpy as np
+import random
 class DataParser_siml:
     def __init__(self,paraLength,labels,vocabSize):
         self.data=[]
@@ -60,11 +61,17 @@ class DataParser_siml:
     def nextBatch(self,batchSize):
         if self.counter >=self.totalPages:
             self.counter=0
+            temp = list(zip(self.features,self.labels))
+            random.shuffle(temp)
+            self.features, self.labels = zip(*temp)
         labelBatch=[]
         feaBatch=[]
         for i in range(batchSize):
             if self.counter+1 >=self.totalPages:
                 self.counter=0
+                temp = list(zip(self.features,self.labels))
+                random.shuffle(temp)
+                self.features, self.labels = zip(*temp)
             labelBatch.append(self.data[self.counter][0])
             feaBatch.append(self.data[self.counter][1])
             self.counter+=1

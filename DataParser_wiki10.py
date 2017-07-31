@@ -1,5 +1,6 @@
 import numpy as np
 import pickle
+import random
 class DataParser_wiki10:
     def __init__(self,paraLength,nlabels,vocabSize):
         self.data=[]
@@ -8,7 +9,7 @@ class DataParser_wiki10:
         self.vocabSize=vocabSize
 
     def getDataFromfile(self,fname):
-        features,labels,n_features,n_labels = pickle.load(open(fname),'rb')
+        features,labels,n_features,n_labels = pickle.load(open(fname,'rb'))
         assert len(features) == len(labels)
         assert self.nlabels == n_labels
         self.totalPages = len(features)
@@ -26,18 +27,24 @@ class DataParser_wiki10:
     def nextBatch(self,batchSize):
         if self.counter >=self.totalPages:
             self.counter=0
+            temp = list(zip(self.features,self.labels))
+            random.shuffle(temp)
+            self.features, self.labels = zip(*temp)
         labelBatch=[]
         featBatch=[]
         featValueBatch=[]
         for i in range(batchSize):
             if self.counter+1 >=self.totalPages:
                 self.counter=0
+                temp = list(zip(self.features,self.labels))
+                random.shuffle(temp)
+                self.features, self.labels = zip(*temp)
             curLabels = self.labels[self.counter]
             oneHotLabels = [0]*self.nlabels
             for l in curLabels:
                 oneHotLabels[l] = 1
             labelBatch.append(oneHotLabels)
-            curFeat = self.features[self.counter].keys()
+            curFeat = list(self.features[self.counter].keys())
             if len(curFeat) > self.paragraphLength:
                 curFeat = curFeat[:self.paragraphLength]
             curFeatValue = [self.features[self.counter][f] for f in curFeat]
