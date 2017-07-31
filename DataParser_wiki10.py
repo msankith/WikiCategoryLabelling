@@ -1,8 +1,3 @@
-
-# coding: utf-8
-
-# In[ ]:
-
 import numpy as np
 import pickle
 class DataParser_wiki10:
@@ -13,7 +8,7 @@ class DataParser_wiki10:
         self.vocabSize=vocabSize
 
     def getDataFromfile(self,fname):
-	features,labels,n_features,n_labels = pickle.load(open(fname))
+        features,labels,n_features,n_labels = pickle.load(open(fname),'rb')
         assert len(features) == len(labels)
         assert self.nlabels == n_labels
         self.totalPages = len(features)
@@ -39,18 +34,18 @@ class DataParser_wiki10:
                 self.counter=0
             curLabels = self.labels[self.counter]
             oneHotLabels = [0]*self.nlabels
-	    for l in curLabels:
-		oneHotLabels[l] = 1
+            for l in curLabels:
+                oneHotLabels[l] = 1
             labelBatch.append(oneHotLabels)
             curFeat = self.features[self.counter].keys()
             if len(curFeat) > self.paragraphLength:
-		curFeat = curFeat[:self.paragraphLength]
+                curFeat = curFeat[:self.paragraphLength]
             curFeatValue = [self.features[self.counter][f] for f in curFeat]
             for i in range(len(curFeat),self.paragraphLength):
-		curFeat.append(0)
-		curFeatValue.append(0)
+                curFeat.append(0)
+                curFeatValue.append(0)
             featBatch.append(curFeat)
-            featValueBatch.append(featValueBatch)
+            featValueBatch.append(curFeatValue)
             self.counter+=1
         return (labelBatch,[featBatch],[featValueBatch])
     
