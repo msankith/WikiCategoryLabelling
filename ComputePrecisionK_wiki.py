@@ -1,9 +1,9 @@
-import os, sys
-from model2_siml import Model2_siml as Model
-from DataParser_siml import DataParser_siml as DataParser
+from DataParser_wiki10 import DataParser_wiki10 as DataParser
+from model2_wiki import Model2_wiki as Model
 from sklearn.metrics import f1_score
 from sklearn.metrics import confusion_matrix
 import numpy as np
+import os, sys
 import math
 
 
@@ -14,11 +14,13 @@ def ComputePrecisionK(modelfile,testfile,K_list):
 
     maxParagraphLength=2500
     maxParagraphs=1
-    labels=1001
-    vocabularySize=76391
-    model = Model(maxParagraphLength,maxParagraphs,labels,vocabularySize)
+    labels=30938
+    vocabularySize=101939
+    num_filters = 100
+    model = Model(maxParagraphLength,maxParagraphs,labels,vocabularySize,num_filters)
 
     testing = DataParser(maxParagraphLength,labels,vocabularySize)
+    print(testfile)
     testing.getDataFromfile(testfile)
     print("data loading done")
     print("no of test examples: " + str(testing.totalPages))

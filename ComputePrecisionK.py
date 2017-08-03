@@ -14,8 +14,8 @@ def ComputePrecisionK(modelfile,testfile,K_list):
 
     maxParagraphLength=250
     maxParagraphs=10
-    labels=1001
-    vocabularySize=76390
+    labels=10001
+    vocabularySize=76391
     model = Model(maxParagraphLength,maxParagraphs,labels,vocabularySize)
 
     testing = DataParser(maxParagraphLength,maxParagraphs,labels,vocabularySize)
@@ -27,13 +27,13 @@ def ComputePrecisionK(modelfile,testfile,K_list):
 
     print("model loading done")
 
-    batchSize = 10
+    batchSize = 1000
 
     testing.restore()
     truePre=[]
     pred=[]
     for i in range(math.ceil(testing.totalPages/batchSize)):
-        if i < testing.totalPages/batchSize:
+        if i < testing.totalPages/batchSize-1:
             data=testing.nextBatch(batchSize)
         else:
             data=testing.nextBatch(testing.totalPages%batchSize)
@@ -60,7 +60,7 @@ def ComputePrecisionK(modelfile,testfile,K_list):
 if __name__ == '__main__':
     modelfile = sys.argv[1]
     testfile = sys.argv[2]
-    K_list = [1,2,3,4,5]
+    K_list = [1,2,3,4,5,6,7,8,9,10,15,20]
 
     ComputePrecisionK(modelfile,testfile,K_list)
 

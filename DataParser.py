@@ -64,9 +64,7 @@ class DataParser:
     def nextBatch(self,batchSize):
         if self.counter >=self.totalPages:
             self.counter=0
-            temp = list(zip(self.features,self.labels))
-            random.shuffle(temp)
-            self.features, self.labels = zip(*temp)
+            random.shuffle(self.data)
         labelBatch=[]
         feaBatch=[]
         for itr in range(self.maxParagraph):
@@ -74,9 +72,7 @@ class DataParser:
         for i in range(batchSize):
             if self.counter+1 >=self.totalPages:
                 self.counter=0
-                temp = list(zip(self.features,self.labels))
-                random.shuffle(temp)
-                self.features, self.labels = zip(*temp)
+                random.shuffle(self.data)
             labelBatch.append(self.data[self.counter][0])
             for itr in range(self.maxParagraph):
                 feaBatch[itr].append(self.data[self.counter][1][itr])
